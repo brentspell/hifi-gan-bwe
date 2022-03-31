@@ -1,0 +1,32 @@
+#
+# requirements.in - explicit python dependencies
+#
+# to update requirements.txt, run:
+#
+#    pip-compile
+#
+
+# setup
+black
+flake8
+gitpython
+isort
+mypy
+pre-commit
+
+# testing
+coveralls
+hypothesis
+pytest
+pytest-benchmark
+pytest-cov
+
+# math/ml
+audioread
+matplotlib
+numpy
+soundfile
+torch
+torchaudio
+tqdm
+wandb
