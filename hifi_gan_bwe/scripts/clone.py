@@ -58,3 +58,7 @@ def main() -> None:
     shutil.copy2(checkpoint, target_path)
 
     print(f"copied {source_path.name}/{checkpoint.name} to {target_path.name}")
+
+
+if __name__ == "__main__":
+    main()

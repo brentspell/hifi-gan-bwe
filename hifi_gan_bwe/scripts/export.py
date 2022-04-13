@@ -60,3 +60,7 @@ def main() -> None:
     torch.save(model.state_dict(), target_path)
 
     print(f"exported {source_path.name} to {target_path}")
+
+
+if __name__ == "__main__":
+    main()

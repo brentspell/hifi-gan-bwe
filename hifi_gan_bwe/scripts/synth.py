@@ -47,3 +47,7 @@ def main() -> None:
 
     # save the output file
     soundfile.write(args.target_path, audio, samplerate=int(model.sample_rate))
+
+
+if __name__ == "__main__":
+    main()
