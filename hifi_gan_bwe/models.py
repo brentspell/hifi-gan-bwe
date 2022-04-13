@@ -2,10 +2,14 @@ import typing as T
 from pathlib import Path
 
 import numpy as np
+import requests
 import torch
 import torchaudio
+from tqdm import tqdm
 
 from hifi_gan_bwe.datasets import SAMPLE_RATE
+
+CDN_URL = "https://cdn.brentspell.com/models/hifi-gan-bwe"
 
 
 class BandwidthExtender(torch.nn.Module):
@@ -29,6 +33,11 @@ class BandwidthExtender(torch.nn.Module):
 
     @staticmethod
     def from_pretrained(path: str) -> "BandwidthExtender":
+        # first see if this is a hosted pretrained model, download it if so
+        if not path.endswith(".pt"):
+            path = _download(path)
+
+        # load the pretrained model's weights from the path
         state = torch.load(path)
         model = BandwidthExtender()
         model.load_state_dict(state)
@@ -309,3 +318,25 @@ class MelspecDiscriminator(torch.nn.Module):
         x = x.mean(dim=[-2, -1])
 
         return x, f
+
+
+def _download(name: str) -> str:
+    # first see if we have a copy of the model locally
+    path = Path.home() / ".local" / "hifi-gan-bwe"
+    path.mkdir(parents=True, exist_ok=True)
+    path = path / f"{name}.pt"
+    if not path.exists():
+        # if not, download it from the CDN
+        with requests.get(f"{CDN_URL}/{path.name}", stream=True) as response:
+            response.raise_for_status()
+            path.write_bytes(
+                b"".join(
+                    tqdm(
+                        response.iter_content(1024),
+                        desc=f"downloading {path.name}",
+                        unit="KB",
+                    )
+                )
+            )
+
+    return str(path)

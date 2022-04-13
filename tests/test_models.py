@@ -54,6 +54,14 @@ def test_save_load(tmpdir: Path) -> None:
 
 
 @torch.no_grad()
+def test_hosted() -> None:
+    model_name = "hifi-gan-bwe-05-d3abf04-vctk-48kHz"
+    model = models.BandwidthExtender.from_pretrained(model_name)
+    y = model(torch.zeros([80]), 8000)
+    assert list(y.shape) == [480]
+
+
+@torch.no_grad()
 def test_discriminator() -> None:
     gen = models.BandwidthExtender()
     dsc = models.Discriminator()

@@ -13,6 +13,7 @@ gitpython
 isort
 mypy
 pre-commit
+twine
 
 # testing
 coveralls
@@ -21,12 +22,16 @@ pytest
 pytest-benchmark
 pytest-cov
 
-# math/ml
+# dependencies
 audioread
 matplotlib
 numpy
+requests
 soundfile
 torch
 torchaudio
 tqdm
 wandb
+
+# types
+types-requests

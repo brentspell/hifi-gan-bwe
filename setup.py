@@ -2,11 +2,11 @@
 
 from distutils.core import setup
 
-import setuptools
+import setuptools  # noqa, required for markdown manifest
 
 setup(
     name="hifi-gan-bwe",
-    version="0.1.1",
+    version="0.1.4",
     description=(
         "Unofficial implementation of the HiFi-GAN+ model "
         "for audio bandwidth extension"
@@ -16,12 +16,13 @@ setup(
     url="https://github.com/brentspell/hifi-gan-bwe/",
     author="Brent M. Spell",
     author_email="brent@brentspell.com",
-    packages=setuptools.find_packages(),
+    packages=["hifi_gan_bwe", "hifi_gan_bwe.scripts"],
     setup_requires=[],
     install_requires=[
         "audioread",
         "matplotlib",
         "numpy",
+        "requests",
         "soundfile",
         "torch",
         "torchaudio",
@@ -30,6 +31,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
+            "hifi_gan_bwe = hifi_gan_bwe.scripts.synth:main",
             "hifi_clone = hifi_gan_bwe.scripts.clone:main",
             "hifi_export = hifi_gan_bwe.scripts.export:main",
             "hifi_synth = hifi_gan_bwe.scripts.synth:main",
