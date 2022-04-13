@@ -6,7 +6,7 @@ import setuptools  # noqa, required for markdown manifest
 
 setup(
     name="hifi-gan-bwe",
-    version="0.1.4",
+    version="0.1.5",
     description=(
         "Unofficial implementation of the HiFi-GAN+ model "
         "for audio bandwidth extension"
@@ -31,11 +31,11 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "hifi_gan_bwe = hifi_gan_bwe.scripts.synth:main",
-            "hifi_clone = hifi_gan_bwe.scripts.clone:main",
-            "hifi_export = hifi_gan_bwe.scripts.export:main",
-            "hifi_synth = hifi_gan_bwe.scripts.synth:main",
-            "hifi_train = hifi_gan_bwe.scripts.train:main",
+            "hifi-gan-bwe = hifi_gan_bwe.scripts.synth:main",
+            "hifi-clone = hifi_gan_bwe.scripts.clone:main",
+            "hifi-export = hifi_gan_bwe.scripts.export:main",
+            "hifi-synth = hifi_gan_bwe.scripts.synth:main",
+            "hifi-train = hifi_gan_bwe.scripts.train:main",
         ]
     },
     classifiers=[
