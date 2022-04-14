@@ -12,7 +12,7 @@ enhancing audio that was filtered to remove high frequency noise.
 
 ## Status
 [![PyPI](https://badge.fury.io/py/hifi-gan-bwe.svg)](https://badge.fury.io/py/hifi-gan-bwe)
-![Tests](https://github.com/brentspell/hifi-gan-bwe/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/brentspell/hifi-gan-bwe/workflows/test/badge.svg)
 [![Coveralls](https://coveralls.io/repos/github/brentspell/hifi-gan-bwe/badge.svg?branch=main)](https://coveralls.io/github/brentspell/hifi-gan-bwe)
 [![DOI](https://zenodo.org/badge/DOI/10.1109/ICASSP39728.2021.9413575.svg)](https://doi.org/10.1109/ICASSP39728.2021.9413575)
 
@@ -27,7 +27,7 @@ The example below uses a pretrained HiFi-GAN+ model to upsample a 1 second
 import torch
 from hifi_gan_bwe import BandwidthExtender
 
-model = BandwidthExtender.from_pretrained("hifi-gan-bwe-09-a81e232-vctk-48kHz")
+model = BandwidthExtender.from_pretrained("hifi-gan-bwe-05-d3abf04-vctk-48kHz")
 
 fs = 24000
 x = torch.full([fs], 261.63 / fs).cumsum(-1) % 1.0 - 0.5
@@ -45,7 +45,7 @@ the output can be in any format supported by
 
 ```shell
 pipx run --python=python3.9 hifi-gan-bwe \
-  hifi-gan-bwe-09-a81e232-vctk-48kHz \
+  hifi-gan-bwe-05-d3abf04-vctk-48kHz \
   input.mp3 \
   output.wav
 ```
@@ -57,7 +57,7 @@ the HiFi-GAN+ library into it and run synthesis, training, etc. using it.
 ```shell
 pip install hifi-gan-bwe
 
-hifi-synth hifi-gan-bwe-09-a81e232-vctk-48kHz input.mp3 output.wav
+hifi-synth hifi-gan-bwe-05-d3abf04-vctk-48kHz input.mp3 output.wav
 ```
 
 ## Pretrained Models
@@ -67,7 +67,6 @@ the link and use it offline.
 
 |Name|Sample Rate|Parameters|Wandb Metrics|Notes|
 |-|-|-|-|-|
-|[hifi-gan-bwe-09-a81e232-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-09-a81e232-vctk-48kHz.pt)|48kHz|1M|[bwe-09-a81e232](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-09-a81e232)|Trained for 1.2M iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
 |[hifi-gan-bwe-05-d3abf04-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-05-d3abf04-vctk-48kHz.pt)|48kHz|1M|[bwe-05-d3abf04](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-05-d3abf04)|Trained for 200K iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
 
 ## Training
@@ -81,6 +80,13 @@ locally. The following commands are supported:
 |[hifi-clone](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/clone.py)|Clone an existing training run at a given or the latest checkpoint.|
 |[hifi-export](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/export.py)|Optimize a model for inference and export it to a PyTorch model file (.pt).|
 |[hifi-synth](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/synth.py)|Run model inference using a trained model on a source audio file.|
+
+For example, you might start a new training run called `bwe-01` with the
+following command:
+
+```bash
+hifi-train 01
+```
 
 To train a model, you will first need to download the
 [VCTK](https://datashare.ed.ac.uk/handle/10283/2950) and
