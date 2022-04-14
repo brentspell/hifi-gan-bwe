@@ -1,3 +1,12 @@
+""" HiFi-GAN+ audio synthesis
+
+This script runs inference using a pretrained HiFi-GAN+ model. It loads
+an audio file in an format supported by the audioread package, runs the
+model forward, and then writes the results to an output file, in any
+format supported by the soundfile library.
+
+"""
+
 import argparse
 from pathlib import Path
 

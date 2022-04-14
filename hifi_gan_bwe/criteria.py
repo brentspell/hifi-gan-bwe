@@ -1,3 +1,5 @@
+""" custom model losses """
+
 import torch
 import torchaudio
 
@@ -5,6 +7,14 @@ from hifi_gan_bwe.datasets import RESAMPLE_RATES, SAMPLE_RATE
 
 
 class ContentCriteria(torch.nn.Module):
+    """HiFi-GAN+ generator content losses
+
+    These are the non-adversarial content losses described in the
+    original paper. The losses include L1 losses on the raw waveform,
+    a set of log-scale STFTs, and the mel spectrogram.
+
+    """
+
     def __init__(self) -> None:
         super().__init__()
 

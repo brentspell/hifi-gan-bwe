@@ -1,3 +1,33 @@
+""" checkpoint cloning script
+
+This script provides the ability to make a shallow copy of a previous
+training run. It copies a model checkpoint (latest or a specified number)
+to a new log directory, leaving behind logs, wandb files, etc. Given an
+existing log structure like the following:
+
+    logs/
+        bwe-01-7910c96/
+            ckpt-0000k.pt
+            ckpt-0010k.pt
+            ckpt-0020k.pt
+
+running the following command:
+
+    python -m hifi_gan_bwe.scripts.clone bwe-01 bwe-02
+
+would result in the following directory:
+
+logs/
+    bwe-01-7910c96/...
+    bwe-02-8abbca9/
+        ckpt-0020k.pt
+
+Then training could begin on the new cloned model:
+
+    python -m hifi_gan_bwe.scripts.train bwe-02
+
+"""
+
 import argparse
 import re
 import shutil

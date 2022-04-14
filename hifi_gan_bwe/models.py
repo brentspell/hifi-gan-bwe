@@ -1,3 +1,30 @@
+""" HiFi-GAN+ bandwidth extension models
+
+The bandwidth extender upsamples an audio signal from a lower sample rate
+(typically 8/16/24/44.1kHz) to a full-band signal (usually 48kHz). Unlike
+a standard resampler, the bandwidth extender attempts to reconstruct high
+frequency components that were lost/never present in the band-limited
+signal.
+
+To do this, HiFi-GAN+ first upsamples the signal to the target sample rate
+using linear interpolation. It then passes the signal through a stack of
+non-causal, non-conditional WaveNet blocks, essentially a dilated residual
+convolution with a large receptive field.
+
+The bandwidth extender is trained in the LS-GAN framework, with multiple
+discriminators in the time and frequency domains. The waveform discriminators
+are 1D convolutional filters that are applied at different sample rates
+to the output signal. The spectrogram discriminator is a 2D convolutional
+filter over the log-scale mel spectrogram.
+
+The bandwidth extender is normalized using weightnorm over all convolutional
+filters, which can be removed after training to reduce computation during
+inference.
+
+https://pixl.cs.princeton.edu/pubs/Su_2021_BEI/ICASSP2021_Su_Wang_BWE.pdf
+
+"""
+
 import typing as T
 from pathlib import Path
 
@@ -13,6 +40,8 @@ CDN_URL = "https://cdn.brentspell.com/models/hifi-gan-bwe"
 
 
 class BandwidthExtender(torch.nn.Module):
+    """HiFi-GAN+ generator model"""
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -60,9 +89,32 @@ class BandwidthExtender(torch.nn.Module):
         model.load_state_dict(state["gen_model"])
         return model
 
-    @property
-    def receptive_field(self) -> int:
-        return self._wavenet.receptive_field
+    def forward(self, x: torch.Tensor, sample_rate: int) -> torch.Tensor:
+        # allow simple synthesis over vectors by automatically unsqueezing
+        if squeeze := len(x.shape) == 1:
+            x = x.unsqueeze(0).unsqueeze(0)
+
+        # first upsample the signal to the target sample rate
+        # using linear interpolation
+        x = torch.nn.functional.interpolate(
+            x,
+            scale_factor=float(self.sample_rate) / sample_rate,
+            mode="linear",
+        )
+
+        # in order to reduce edge artificacts due to residual conv padding,
+        # pad the signal with silence before applying the wavenet, then
+        # remove the padding afterward to get the desired signal length
+        pad = self._wavenet.receptive_field // 2
+        x = torch.nn.functional.pad(x, [pad, pad])
+        x = torch.tanh(self._wavenet(x))
+        x = x[..., pad:-pad]
+
+        # if a single vector was requested, squeeze back to it
+        if squeeze:
+            x = x.squeeze(0).squeeze(0)
+
+        return x
 
     def apply_weightnorm(self) -> None:
         self.apply(lambda m: self._apply_conv(torch.nn.utils.weight_norm, m))
@@ -70,32 +122,21 @@ class BandwidthExtender(torch.nn.Module):
     def remove_weightnorm(self) -> None:
         self.apply(lambda m: self._apply_conv(torch.nn.utils.remove_weight_norm, m))
 
-    def forward(self, x: torch.Tensor, sample_rate: int) -> torch.Tensor:
-        if squeeze := len(x.shape) == 1:
-            x = x.unsqueeze(0).unsqueeze(0)
-
-        x = torch.nn.functional.interpolate(
-            x,
-            scale_factor=float(self.sample_rate) / sample_rate,
-            mode="linear",
-        )
-
-        pad = self.receptive_field // 2
-        x = torch.nn.functional.pad(x, [pad, pad])
-        x = torch.tanh(self._wavenet(x))
-        x = x[..., pad:-pad]
-
-        if squeeze:
-            x = x.squeeze(0).squeeze(0)
-
-        return x
-
     def _apply_conv(self, fn: T.Callable, module: torch.nn.Module) -> None:
         if isinstance(module, torch.nn.Conv1d):
             fn(module)
 
 
 class WaveNet(torch.nn.Module):
+    """stacked gated residual 1D convolutions
+
+    This is a non-causal, non-conditional variant of the WaveNet architecture
+    from van den Oord, et al.
+
+    https://arxiv.org/abs/1609.03499
+
+    """
+
     def __init__(
         self,
         stacks: int,
@@ -108,12 +149,14 @@ class WaveNet(torch.nn.Module):
     ):
         super().__init__()
 
+        # initial 1x1 convolution to match the residual channels
         self._conv_in = torch.nn.Conv1d(
             in_channels=in_channels,
             out_channels=wavenet_channels,
             kernel_size=1,
         )
 
+        # stacked gated residual convolution layers
         self._layers = torch.nn.ModuleList()
         for _ in range(stacks):
             for i in range(layers):
@@ -124,12 +167,14 @@ class WaveNet(torch.nn.Module):
                 )
                 self._layers.append(layer)
 
+        # output 1x1 convolution to project to the desired output dimension
         self._conv_out = torch.nn.Conv1d(
             in_channels=wavenet_channels,
             out_channels=out_channels,
             kernel_size=1,
         )
 
+        # calculate the network's effective receptive field
         self.receptive_field = (
             (kernel_size - 1) * stacks * sum(dilation_base**i for i in range(layers))
         )
@@ -152,6 +197,8 @@ class WaveNet(torch.nn.Module):
 
 
 class WaveNetLayer(torch.nn.Module):
+    """a single gated residual wavenet layer"""
+
     def __init__(
         self,
         channels: int,
@@ -160,6 +207,7 @@ class WaveNetLayer(torch.nn.Module):
     ):
         super().__init__()
 
+        # combined gate+activation convolution
         self._conv = torch.nn.Conv1d(
             in_channels=channels,
             out_channels=channels,
@@ -168,11 +216,14 @@ class WaveNetLayer(torch.nn.Module):
             dilation=dilation,
         )
 
+        # skip connection projection
         self._conv_skip = torch.nn.Conv1d(
             in_channels=channels // 2,
             out_channels=channels,
             kernel_size=1,
         )
+
+        # output projection
         self._conv_out = torch.nn.Conv1d(
             in_channels=channels // 2,
             out_channels=channels,
@@ -201,30 +252,40 @@ class WaveNetLayer(torch.nn.Module):
 
 
 class Discriminator(torch.nn.Module):
+    """HiFi-GAN+ discriminator wrapper"""
+
     def __init__(self) -> None:
         super().__init__()
 
+        # attach the spectrogram discriminator and waveform discriminators
         self._dsc = torch.nn.ModuleList()
         self._dsc.append(MelspecDiscriminator())
-        for fs in [6000, 12000, 24000, 48000]:
-            self._dsc.append(WaveDiscriminator(fs))
+        for sample_rate in [6000, 12000, 24000, 48000]:
+            self._dsc.append(WaveDiscriminator(sample_rate))
 
     def forward(self, x: torch.Tensor) -> T.Tuple[torch.Tensor, T.List[torch.Tensor]]:
+        # collect the outputs and feature maps for each discriminator
         f = []
         y = []
         for dsc_model in self._dsc:
             yi, fi = dsc_model(x)
             y.append(yi)
             f.extend(fi)
+
+        # stack the adversarial outputs into a single tensor, but return
+        # the heterogeneous feature maps as a simple list
         return torch.cat(y, dim=-1), f
 
 
 class WaveDiscriminator(torch.nn.Module):
+    """waveform (time domain) discriminator"""
+
     def __init__(self, sample_rate: int):
         super().__init__()
 
         self._sample_rate = sample_rate
 
+        # time domain 1D convolutions
         kernel_sizes = [15, 41, 41, 41, 41, 5, 3]
         strides = [1, 4, 4, 4, 4, 1, 1]
         channels = [16, 64, 256, 1024, 1024, 1024]
@@ -245,6 +306,7 @@ class WaveDiscriminator(torch.nn.Module):
             ]
         )
 
+        # output adversarial projection
         self._postnet = torch.nn.Conv1d(
             in_channels=channels[-1],
             out_channels=1,
@@ -252,14 +314,17 @@ class WaveDiscriminator(torch.nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> T.Tuple[torch.Tensor, T.List[torch.Tensor]]:
+        # resample the signal to this discriminator's sample rate
         if self._sample_rate != SAMPLE_RATE:
             x = torchaudio.functional.resample(x, SAMPLE_RATE, self._sample_rate)
 
+        # compute hidden layers and feature maps
         f = []
         for c in self._convs:
             x = torch.nn.functional.leaky_relu(c(x), negative_slope=0.1)
             f.append(x)
 
+        # apply the output projection and global average pooling
         x = self._postnet(x)
         x = x.mean(dim=-1)
 
@@ -267,9 +332,12 @@ class WaveDiscriminator(torch.nn.Module):
 
 
 class MelspecDiscriminator(torch.nn.Module):
+    """mel spectrogram (frequency domain) discriminator"""
+
     def __init__(self) -> None:
         super().__init__()
 
+        # mel filterbank transform
         self._melspec = torchaudio.transforms.MelSpectrogram(
             sample_rate=SAMPLE_RATE,
             n_fft=2048,
@@ -279,6 +347,7 @@ class MelspecDiscriminator(torch.nn.Module):
             power=1,
         )
 
+        # time-frequency 2D convolutions
         kernel_sizes = [(7, 7), (4, 4), (4, 4), (4, 4)]
         strides = [(1, 2), (1, 2), (1, 2), (1, 2)]
         self._convs = torch.nn.ModuleList(
@@ -299,6 +368,7 @@ class MelspecDiscriminator(torch.nn.Module):
             ]
         )
 
+        # output adversarial projection
         self._postnet = torch.nn.Conv2d(
             in_channels=32,
             out_channels=1,
@@ -307,13 +377,16 @@ class MelspecDiscriminator(torch.nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> T.Tuple[torch.Tensor, T.List[torch.Tensor]]:
+        # apply the log-scale mel spectrogram transform
         x = torch.log(self._melspec(x) + 1e-5)
 
+        # compute hidden layers and feature maps
         f = []
         for c in self._convs:
             x = c(x)
             f.append(x)
 
+        # apply the output projection and global average pooling
         x = self._postnet(x)
         x = x.mean(dim=[-2, -1])
 

@@ -1,3 +1,11 @@
+""" model export script
+
+This script takes a training checkpoint and converts it to a pretrained
+HiFi-GAN+ model, removing discriminator weights, weight norm scalers,
+and optimizing the model for inference.
+
+"""
+
 import argparse
 from pathlib import Path
 

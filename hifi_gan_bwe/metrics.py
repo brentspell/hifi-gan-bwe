@@ -1,3 +1,13 @@
+""" training metrics interface
+
+Metrics are written to Weights and Biases (wandb.ai) during training and
+validation for scalars, images, etc. Each metric is recorded by name and
+for the current training iteration number. Scalars are maintained as
+running statistics (mean, ema, etc.) over each virtual epoch, after which
+they are reset, similar to tf.keras.metrics.
+
+"""
+
 import typing as T
 from abc import abstractmethod
 
@@ -8,12 +18,23 @@ from matplotlib import pyplot as plt
 
 
 class Summary:
+    """metrics summary writer
+
+    Args:
+        project: project/task name
+        name: training run name
+        log_path: path to the log directory for this training run
+        scalars: list of scalar metric instances to log during training
+        use_wandb: True to enable wandb logging, False otherwise
+
+    """
+
     def __init__(
         self,
         project: str,
         name: str,
         log_path: str,
-        scalars: T.List["Metric"],
+        scalars: T.List["Scalar"],
         use_wandb: bool = True,
     ):
         self._scalars = scalars
@@ -91,7 +112,20 @@ class Summary:
         self._dirty.clear()
 
 
-class Metric:
+class Scalar:
+    """scalar metric base class
+
+    A scalar represents a single named metric that is collected and
+    maintained as a running statistic throughout training. The scalar can
+    be incrementally updated during each step and the current value can
+    be sampled at any point. The scalar can also be reset periodically
+    to discard the effects of earlier samples.
+
+    Args:
+        name: name of the metric
+
+    """
+
     def __init__(self, name: str):
         self._name = name
 
@@ -113,7 +147,9 @@ class Metric:
         raise NotImplementedError()
 
 
-class Mean(Metric):
+class Mean(Scalar):
+    """simple cumulative mean metric"""
+
     def __init__(self, name: str):
         super().__init__(name)
 
@@ -139,7 +175,9 @@ class Mean(Metric):
         self._value += (value - self._value) / self._count
 
 
-class Ema(Metric):
+class Ema(Scalar):
+    """exponentially-weighted moving average metric"""
+
     def __init__(self, name: str, alpha: float = 0.9):
         super().__init__(name)
 
@@ -161,11 +199,15 @@ class Ema(Metric):
 
 
 def grad_norm(model: torch.nn.Module) -> torch.Tensor:
+    """compute the L2 norm of the gradients for a model"""
+
     norms = [v.grad.detach().norm(2) for v in model.parameters() if v.grad is not None]
     return torch.stack(norms).square().sum().sqrt()
 
 
 def weight_norm(model: torch.nn.Module) -> torch.Tensor:
+    """compute the L2 norm of the weights in a model"""
+
     norms = [
         v.norm(2)
         for n, v in model.named_parameters()

@@ -1,19 +1,107 @@
 # HiFi-GAN+
-This package is an unoffical implementation of the HiFi-GAN+ model for
-audio bandwidth extension
+This project is an unoffical implementation of the HiFi-GAN+ model for
+audio bandwidth extension, from the paper
+[Bandwidth Extension is All You Need](https://doi.org/10.1109/ICASSP39728.2021.9413575)
+by Jiaqi Su, Yunyun Wang, Adam Finkelstein, and Zeyu Jin.
+
+The model takes a band-limited audio signal (usually 8/16/24kHz) and
+attempts to reconstruct the high frequency components needed to restore
+a full-band signal at 48kHz. This is useful for upsampling low-rate
+outputs from upstream tasks like text-to-speech, voice conversion, etc. or
+enhancing audio that was filtered to remove high frequency noise.
 
 ## Status
 [![PyPI](https://badge.fury.io/py/hifi-gan-bwe.svg)](https://badge.fury.io/py/hifi-gan-bwe)
 ![Tests](https://github.com/brentspell/hifi-gan-bwe/actions/workflows/test.yml/badge.svg)
 [![Coveralls](https://coveralls.io/repos/github/brentspell/hifi-gan-bwe/badge.svg?branch=main)](https://coveralls.io/github/brentspell/hifi-gan-bwe)
+[![DOI](https://zenodo.org/badge/DOI/10.1109/ICASSP39728.2021.9413575.svg)](https://doi.org/10.1109/ICASSP39728.2021.9413575)
 
-### Install with pip
-```bash
-pip install hifi-gan-bwe
-```
+[![Wandb](https://raw.githubusercontent.com/wandb/assets/main/wandb-github-badge-gradient.svg)](https://wandb.ai/brentspell/hifi-gan-bwe)
 
 ## Usage
 
+The example below uses a pretrained HiFi-GAN+ model to upsample a 1 second
+24kHz sawtooth to 48kHz.
+
+```python
+import torch
+from hifi_gan_bwe import BandwidthExtender
+
+model = BandwidthExtender.from_pretrained("hifi-gan-bwe-09-a81e232-vctk-48kHz")
+
+fs = 24000
+x = torch.full([fs], 261.63 / fs).cumsum(-1) % 1.0 - 0.5
+y = model(x, fs)
+```
+
+### Running with pipx
+The HiFi-GAN+ [library](https://pypi.org/project/hifi-gan-bwe/) can be run
+directly from PyPI if you have the [pipx](https://github.com/pypa/pipx)
+application installed. The following script uses a hosted pretrained model
+to upsample an MP3 file to 48kHz. The input audio can be in any format
+supported by the [audioread](https://pypi.org/project/audioread) library, and
+the output can be in any format supported by
+[soundfile](https://pypi.org/project/SoundFile).
+
+```shell
+pipx run --python=python3.9 hifi-gan-bwe \
+  hifi-gan-bwe-09-a81e232-vctk-48kHz \
+  input.mp3 \
+  output.wav
+```
+
+### Running in a Virtual Environment
+If you have a Python 3.9 virtual environment installed, you can install
+the HiFi-GAN+ library into it and run synthesis, training, etc. using it.
+
+```shell
+pip install hifi-gan-bwe
+
+hifi-synth hifi-gan-bwe-09-a81e232-vctk-48kHz input.mp3 output.wav
+```
+
+## Pretrained Models
+The following models can be loaded with `BandwidthExtender.from_pretrained`
+and used for audio upsampling. You can also download the model file from
+the link and use it offline.
+
+|Name|Sample Rate|Parameters|Wandb Metrics|Notes|
+|-|-|-|-|-|
+|[hifi-gan-bwe-09-a81e232-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-09-a81e232-vctk-48kHz.pt)|48kHz|1M|[bwe-09-a81e232](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-09-a81e232)|Trained for 1.2M iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
+|[hifi-gan-bwe-05-d3abf04-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-05-d3abf04-vctk-48kHz.pt)|48kHz|1M|[bwe-05-d3abf04](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-05-d3abf04)|Trained for 200K iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
+
+## Training
+If you want to train your own model, you can use any of the methods above
+to install/run the library or fork the repo and run the script commands
+locally. The following commands are supported:
+
+|Name|Description|
+|-|-|
+|[hifi-train](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/train.py)|Starts a new training run, pass in a name for the run.|
+|[hifi-clone](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/clone.py)|Clone an existing training run at a given or the latest checkpoint.|
+|[hifi-export](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/export.py)|Optimize a model for inference and export it to a PyTorch model file (.pt).|
+|[hifi-synth](https://github.com/brentspell/hifi-gan-bwe/blob/main/hifi_gan_bwe/scripts/synth.py)|Run model inference using a trained model on a source audio file.|
+
+To train a model, you will first need to download the
+[VCTK](https://datashare.ed.ac.uk/handle/10283/2950) and
+[DNS Challenge](https://github.com/microsoft/DNS-Challenge)
+datasets. By default, these datasets are assumed to be in the `./data/vctk`
+and `./data/dns` directories. See `train.py` for how to specify your own
+training data directories. If you want to use a custom training dataset,
+you can implement a dataset wrapper in datasets.py.
+
+The training scripts use [wandb.ai](https://wandb.ai/) for experiment tracking
+and visualization. Wandb metrics can be disabled by passing `--no_wandb` to
+the training script. All of my own experiment results are publicly available
+[here](https://wandb.ai/brentspell/hifi-gan-bwe).
+
+Each training run is identified by a name and a git hash
+(ex: `bwe-01-8abbca9`). The git hash is used for simple experiment tracking,
+reproducibility, and model provenance. Using git to manage experiments also
+makes it easy to change model hyperparameters by simply changing the code,
+making a commit, and starting the training run. This is why there is no
+hyperparameter configuration file in the project, since I often end up
+having to change the code anyway to run interesting experiments.
 
 ## Development
 
@@ -28,6 +116,13 @@ pyenv virtualenv 3.9.10 hifi-gan-bwe
 pip install -r requirements.txt
 ```
 
+If you want to run the `hifi-*` scripts described above in development,
+you can install the package locally:
+
+```bash
+pip install -e .
+```
+
 You can then run tests, etc. follows:
 
 ```bash
@@ -38,31 +133,31 @@ flake8 .
 mypy .
 ```
 
-These can also be used with the [pre-commiit](https://pypi.org/project/pre-commit/)
-library to run all checks at commit time.
-
-### Deployment
-The project uses setup.py for installation and is deployed to
-[PyPI](https://pypi.org/project/hifi-gan-bwe). The source distribution can be
-built for deployment with the following command:
+These checks are also included in the
+[pre-commit](https://pypi.org/project/pre-commit/) configuration for the
+project, so you can set them up to run automatically on commit by running
 
 ```bash
-python setup.py clean --all
-rm -r ./dist
-python setup.py sdist
+pre-commit install
 ```
 
-The distribution can then be uploaded to PyPI using twine.
+## Acknowledgements
+The original research on the HiFi-GAN+ model is not my own, and all credit
+goes to the paper's authors. I also referred to kan-bayashi's excellent
+[Parallel WaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN)
+implementation, specifically the WaveNet module. If you use this code, please
+cite the original paper:
 
-```bash
-twine upload --repository-url=https://upload.pypi.org/legacy/ dist/*
-```
-
-For deployment testing, the following command can be used to upload to the
-PyPI test repository:
-
-```bash
-twine upload --repository-url=https://test.pypi.org/legacy/ dist/*
+```bibtex
+@inproceedings{su2021bandwidth,
+  title={Bandwidth extension is all you need},
+  author={Su, Jiaqi and Wang, Yunyun and Finkelstein, Adam and Jin, Zeyu},
+  booktitle={ICASSP 2021-2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages={696--700},
+  year={2021},
+  organization={IEEE},
+  url={https://doi.org/10.1109/ICASSP39728.2021.9413575},
+}
 ```
 
 ## License
