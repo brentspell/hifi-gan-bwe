@@ -16,7 +16,7 @@ enhancing audio that was filtered to remove high frequency noise.
 [![Coveralls](https://coveralls.io/repos/github/brentspell/hifi-gan-bwe/badge.svg?branch=main)](https://coveralls.io/github/brentspell/hifi-gan-bwe)
 [![DOI](https://zenodo.org/badge/DOI/10.1109/ICASSP39728.2021.9413575.svg)](https://doi.org/10.1109/ICASSP39728.2021.9413575)
 
-[![Wandb](https://raw.githubusercontent.com/wandb/assets/main/wandb-github-badge-gradient.svg)](https://wandb.ai/brentspell/hifi-gan-bwe)
+[![Wandb](https://raw.githubusercontent.com/wandb/assets/main/wandb-github-badge-gradient.svg)](https://wandb.ai/brentspell/hifi-gan-bwe?workspace=user-brentspell)
 
 ## Usage
 
@@ -67,7 +67,7 @@ the link and use it offline.
 
 |Name|Sample Rate|Parameters|Wandb Metrics|Notes|
 |-|-|-|-|-|
-|[hifi-gan-bwe-05-d3abf04-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-05-d3abf04-vctk-48kHz.pt)|48kHz|1M|[bwe-05-d3abf04](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-05-d3abf04)|Trained for 200K iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
+|[hifi-gan-bwe-05-d3abf04-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-05-d3abf04-vctk-48kHz.pt)|48kHz|1M|[bwe-05-d3abf04](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-05-d3abf04?workspace=user-brentspell)|Trained for 200K iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
 
 ## Training
 If you want to train your own model, you can use any of the methods above
@@ -98,8 +98,8 @@ you can implement a dataset wrapper in datasets.py.
 
 The training scripts use [wandb.ai](https://wandb.ai/) for experiment tracking
 and visualization. Wandb metrics can be disabled by passing `--no_wandb` to
-the training script. All of my own experiment results are publicly available
-[here](https://wandb.ai/brentspell/hifi-gan-bwe).
+the training script. All of my own experiment results are publicly available at
+[wandb.ai/brentspell/hifi-gan-bwe](https://wandb.ai/brentspell/hifi-gan-bwe?workspace=user-brentspell).
 
 Each training run is identified by a name and a git hash
 (ex: `bwe-01-8abbca9`). The git hash is used for simple experiment tracking,
