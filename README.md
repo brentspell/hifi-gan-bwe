@@ -8,7 +8,9 @@ The model takes a band-limited audio signal (usually 8/16/24kHz) and
 attempts to reconstruct the high frequency components needed to restore
 a full-band signal at 48kHz. This is useful for upsampling low-rate
 outputs from upstream tasks like text-to-speech, voice conversion, etc. or
-enhancing audio that was filtered to remove high frequency noise.
+enhancing audio that was filtered to remove high frequency noise. For more
+information, please see this
+[blog post](https://brentspell.com/2022/hifi-gan-bwe/).
 
 ## Status
 [![PyPI](https://badge.fury.io/py/hifi-gan-bwe.svg)](https://badge.fury.io/py/hifi-gan-bwe)
