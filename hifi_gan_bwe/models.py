@@ -91,7 +91,8 @@ class BandwidthExtender(torch.nn.Module):
 
     def forward(self, x: torch.Tensor, sample_rate: int) -> torch.Tensor:
         # allow simple synthesis over vectors by automatically unsqueezing
-        if squeeze := len(x.shape) == 1:
+        squeeze = len(x.shape) == 1
+        if squeeze:
             x = x.unsqueeze(0).unsqueeze(0)
 
         # first upsample the signal to the target sample rate
