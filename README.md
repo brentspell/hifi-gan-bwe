@@ -19,6 +19,7 @@ information, please see this
 [![DOI](https://zenodo.org/badge/DOI/10.1109/ICASSP39728.2021.9413575.svg)](https://doi.org/10.1109/ICASSP39728.2021.9413575)
 
 [![Wandb](https://raw.githubusercontent.com/wandb/assets/main/wandb-github-badge-gradient.svg)](https://wandb.ai/brentspell/hifi-gan-bwe?workspace=user-brentspell)
+[![Gradio](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/brentspell/hifi-gan-bwe)
 
 ## Usage
 
@@ -35,6 +36,9 @@ fs = 24000
 x = torch.full([fs], 261.63 / fs).cumsum(-1) % 1.0 - 0.5
 y = model(x, fs)
 ```
+
+There is also a [Gradio demo](https://huggingface.co/spaces/brentspell/hifi-gan-bwe)
+on HugggingFace Spaces where you can upload audio clips and run the model.
 
 ### Running with pipx
 The HiFi-GAN+ [library](https://pypi.org/project/hifi-gan-bwe/) can be run
