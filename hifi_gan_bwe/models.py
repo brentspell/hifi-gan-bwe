@@ -7,7 +7,7 @@ frequency components that were lost/never present in the band-limited
 signal.
 
 To do this, HiFi-GAN+ first upsamples the signal to the target sample rate
-using linear interpolation. It then passes the signal through a stack of
+using bandlimited interpolation. It then passes the signal through a stack of
 non-causal, non-conditional WaveNet blocks, essentially a dilated residual
 convolution with a large receptive field.
 
@@ -96,11 +96,15 @@ class BandwidthExtender(torch.nn.Module):
             x = x.unsqueeze(0).unsqueeze(0)
 
         # first upsample the signal to the target sample rate
-        # using linear interpolation
-        x = torch.nn.functional.interpolate(
+        # using bandlimited interpolation
+        x = torchaudio.functional.resample(
             x,
-            scale_factor=float(self.sample_rate) / sample_rate,
-            mode="linear",
+            sample_rate,
+            self.sample_rate,
+            resampling_method="kaiser_window",
+            lowpass_filter_width=16,
+            rolloff=0.945,
+            beta=14.769656459379492,
         )
 
         # in order to reduce edge artificacts due to residual conv padding,

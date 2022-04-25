@@ -31,7 +31,7 @@ The example below uses a pretrained HiFi-GAN+ model to upsample a 1 second
 import torch
 from hifi_gan_bwe import BandwidthExtender
 
-model = BandwidthExtender.from_pretrained("hifi-gan-bwe-05-cd9f4ca-vctk-48kHz")
+model = BandwidthExtender.from_pretrained("hifi-gan-bwe-10-42890e3-vctk-48kHz")
 
 fs = 24000
 x = torch.full([fs], 261.63 / fs).cumsum(-1) % 1.0 - 0.5
@@ -54,7 +54,7 @@ the output can be in any format supported by
 
 ```shell
 pipx run --python=python3.9 hifi-gan-bwe \
-  hifi-gan-bwe-05-cd9f4ca-vctk-48kHz \
+  hifi-gan-bwe-10-42890e3-vctk-48kHz \
   input.mp3 \
   output.wav
 ```
@@ -66,7 +66,7 @@ the HiFi-GAN+ library into it and run synthesis, training, etc. using it.
 ```shell
 pip install hifi-gan-bwe
 
-hifi-synth hifi-gan-bwe-05-cd9f4ca-vctk-48kHz input.mp3 output.wav
+hifi-synth hifi-gan-bwe-10-42890e3-vctk-48kHz input.mp3 output.wav
 ```
 
 ## Pretrained Models
@@ -76,6 +76,7 @@ the link and use it offline.
 
 |Name|Sample Rate|Parameters|Wandb Metrics|Notes|
 |-|-|-|-|-|
+|[hifi-gan-bwe-10-42890e3-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-10-42890e3-vctk-48kHz.pt)|48kHz|1M|[bwe-10-42890e3](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-10-42890e3?workspace=user-brentspell)|Same as bwe-05, but uses bandlimited interpolation for upsampling, for reduced noise and aliasing. Uses the same parameters as resampy's [kaiser_best](https://github.com/bmcfee/resampy/blob/5f46888e8b52402f2c62f374b39b93e0743543ad/resampy/filters.py#L9) mode.|
 |[hifi-gan-bwe-05-cd9f4ca-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-05-cd9f4ca-vctk-48kHz.pt)|48kHz|1M|[bwe-05-cd9f4ca](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-05-cd9f4ca?workspace=user-brentspell)|Trained for 200K iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
 
 ## Training
