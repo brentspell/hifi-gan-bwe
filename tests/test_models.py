@@ -48,14 +48,14 @@ def test_save_load(tmpdir: Path) -> None:
     model.remove_weightnorm()
 
     model_path = tmpdir / "pretrained.pt"
-    torch.save(model.state_dict(), str(model_path))
+    model.save(str(model_path))
     loaded = models.BandwidthExtender.from_pretrained(str(model_path))
     assert_params(model, loaded)
 
 
 @torch.no_grad()
 def test_hosted() -> None:
-    model_name = "hifi-gan-bwe-05-d3abf04-vctk-48kHz"
+    model_name = "hifi-gan-bwe-05-cd9f4ca-vctk-48kHz"
     model = models.BandwidthExtender.from_pretrained(model_name)
     y = model(torch.zeros([80]), 8000)
     assert list(y.shape) == [480]

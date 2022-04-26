@@ -28,7 +28,6 @@ https://pixl.cs.princeton.edu/pubs/Su_2021_BEI/ICASSP2021_Su_Wang_BWE.pdf
 import typing as T
 from pathlib import Path
 
-import numpy as np
 import requests
 import torch
 import torchaudio
@@ -48,7 +47,7 @@ class BandwidthExtender(torch.nn.Module):
         # store the training sample rate in the state dict, so that
         # we can run inference on a model trained for a different rate
         self.sample_rate: torch.Tensor
-        self.register_buffer("sample_rate", torch.as_tensor(SAMPLE_RATE))
+        self.register_buffer("sample_rate", torch.tensor(SAMPLE_RATE))
 
         self._wavenet = WaveNet(
             stacks=2,
@@ -60,16 +59,17 @@ class BandwidthExtender(torch.nn.Module):
             dilation_base=3,
         )
 
+    def save(self, path: str) -> None:
+        torch.jit.save(torch.jit.script(self), path)
+
     @staticmethod
     def from_pretrained(path: str) -> "BandwidthExtender":
         # first see if this is a hosted pretrained model, download it if so
         if not path.endswith(".pt"):
             path = _download(path)
 
-        # load the pretrained model's weights from the path
-        state = torch.load(path)
-        model = BandwidthExtender()
-        model.load_state_dict(state)
+        # load the local model file as a script module
+        model = torch.jit.load(path)
         return model
 
     @staticmethod
@@ -189,7 +189,7 @@ class WaveNet(torch.nn.Module):
         for n in self._layers:
             x, h = n(x)
             s += h
-        x = s * np.sqrt(1.0 / len(self._layers))
+        x = s * torch.tensor(1.0 / len(self._layers)).sqrt()
 
         # apply the output projection
         x = self._conv_out(x)
@@ -247,7 +247,7 @@ class WaveNetLayer(torch.nn.Module):
         x = self._conv_out(x)
 
         # add residual and apply a normalizing gain
-        x = (x + r) * np.sqrt(0.5)
+        x = (x + r) * torch.tensor(0.5).sqrt()
 
         return x, s
 

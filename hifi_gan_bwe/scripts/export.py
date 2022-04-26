@@ -10,7 +10,6 @@ import argparse
 from pathlib import Path
 
 import git
-import torch
 
 from hifi_gan_bwe import datasets, models
 
@@ -65,7 +64,7 @@ def main() -> None:
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
     # save the model
-    torch.save(model.state_dict(), target_path)
+    model.save(target_path)
 
     print(f"exported {source_path.name} to {target_path}")
 
