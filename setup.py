@@ -6,7 +6,7 @@ import setuptools  # noqa, required for markdown manifest
 
 setup(
     name="hifi-gan-bwe",
-    version="0.1.11",
+    version="0.1.12",
     description=(
         "Unofficial implementation of the HiFi-GAN+ model "
         "for audio bandwidth extension"

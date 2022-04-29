@@ -77,6 +77,9 @@ the link and use it offline.
 |Name|Sample Rate|Parameters|Wandb Metrics|Notes|
 |-|-|-|-|-|
 |[hifi-gan-bwe-10-42890e3-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-10-42890e3-vctk-48kHz.pt)|48kHz|1M|[bwe-10-42890e3](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-10-42890e3?workspace=user-brentspell)|Same as bwe-05, but uses bandlimited interpolation for upsampling, for reduced noise and aliasing. Uses the same parameters as resampy's [kaiser_best](https://github.com/bmcfee/resampy/blob/5f46888e8b52402f2c62f374b39b93e0743543ad/resampy/filters.py#L9) mode.|
+|[hifi-gan-bwe-11-d5f542d-vctk-8kHz-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-11-d5f542d-vctk-8kHz-48kHz.pt)|48kHz|1M|[bwe-11-d5f542d](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-11-d5f542d?workspace=user-brentspell)|Same as bwe-10, but trained only on 8kHz sources, for specialized upsampling.|
+|[hifi-gan-bwe-12-b086d8b-vctk-16kHz-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-12-b086d8b-vctk-16kHz-48kHz.pt)|48kHz|1M|[bwe-12-b086d8b](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-12-b086d8b?workspace=user-brentspell)|Same as bwe-10, but trained only on 16kHz sources, for specialized upsampling.|
+|[hifi-gan-bwe-13-59f00ca-vctk-24kHz-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-13-59f00ca-vctk-24kHz-48kHz.pt)|48kHz|1M|[bwe-13-59f00ca](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-13-59f00ca?workspace=user-brentspell)|Same as bwe-10, but trained only on 24kHz sources, for specialized upsampling.|
 |[hifi-gan-bwe-05-cd9f4ca-vctk-48kHz](https://cdn.brentspell.com/models/hifi-gan-bwe/hifi-gan-bwe-05-cd9f4ca-vctk-48kHz.pt)|48kHz|1M|[bwe-05-cd9f4ca](https://wandb.ai/brentspell/hifi-gan-bwe/runs/bwe-05-cd9f4ca?workspace=user-brentspell)|Trained for 200K iterations on the VCTK speech dataset with noise agumentation from the DNS Challenge dataset.|
 
 ## Training
