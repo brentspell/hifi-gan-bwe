@@ -34,12 +34,17 @@ def main() -> None:
         type=Path,
         help="output audio file path",
     )
+    parser.add_argument(
+        "--device",
+        default="cpu",
+        help="torch device to use for synthesis (ex: cpu, cuda, cuda:1, etc.)",
+    )
 
     args = parser.parse_args()
 
     # load the model
     torch.set_grad_enabled(False)
-    model = models.BandwidthExtender.from_pretrained(args.model)
+    model = models.BandwidthExtender.from_pretrained(args.model).to(args.device)
 
     # load the source audio file
     with audioread.audio_open(str(args.source_path)) as input_:
@@ -52,7 +57,8 @@ def main() -> None:
         )
 
     # run the bandwidth extender on each audio channel
-    audio = np.stack([model(torch.from_numpy(x), sample_rate) for x in audio.T]).T
+    inputs = torch.from_numpy(audio).to(args.device)
+    audio = torch.stack([model(x, sample_rate) for x in inputs.T]).T.cpu().numpy()
 
     # save the output file
     soundfile.write(args.target_path, audio, samplerate=int(model.sample_rate))
